@@ -34,6 +34,7 @@ http://www.crockford.com/javascript/jsmin.html
 * Merges and compresses JavaScript and CSS when running in production.
 * Uses uncompressed originals when running in development.
 * Generates packages on demand in production
+* Optionally preserves licenses for compressed JavaScript files.
 
 == Components
 
@@ -81,16 +82,16 @@ javascripts:
   - application
 stylesheets: 
 - base: []
-
-Multiple packages:
+  
+Multiple packages with licenses:
 
 ---
 javascripts:
 - base:
-  - prototype
-  - effects
-  - controls
-  - dragdrop
+  - prototype: prototype
+  - effects: scriptaculous
+  - controls: scriptaculous
+  - dragdrop: scriptaculous
   - application
 - secondary:
   - foo
@@ -102,6 +103,16 @@ stylesheets:
 - secondary:
   - foo
   - bar
+licenses:
+  prototype: |
+    * Prototype JavaScript framework, version 1.5.0_rc0
+    * (c) 2005 Sam Stephenson
+    * Prototype is freely distributable under the terms of an MIT-style license.
+    * For details, see the Prototype web site: http://www.prototypejs.org/
+  scriptaculous: |
+    * script.aculo.us scriptaculous.js v1.8.0, Tue Nov 06 15:01:40 +0300 2007
+    * script.aculo.us is freely distributable under the terms of an MIT-style license.
+    * For details, see the script.aculo.us web site: http://script.aculo.us/
 
 3. Run the rake task "asset:packager:build_all" to generate the compressed, merged versions
 for each package. Whenever you rearrange the yaml file, you'll need to run this task again. 
@@ -116,7 +127,7 @@ to run the rake task when deploying, its just recommended for speeding up initia
 4. Use the helper functions whenever including these files in your application. See below for examples.
 
 5. Potential warning: css compressor function currently removes CSS comments. This might blow
-away some CSS hackery. To disable comment removal, comment out /lib/synthesis/asset_package.rb line 176.
+away some CSS hackery. To disable comment removal, comment out /lib/synthesis/asset_package.rb line 238.
 
 == JavaScript Examples
 

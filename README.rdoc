@@ -33,12 +33,12 @@ http://www.crockford.com/javascript/jsmin.html
 
 * Merges and compresses JavaScript and CSS when running in production.
 * Uses uncompressed originals when running in development.
-* Generates packages on demand in production
+* Generates packages on demand in production.
 * Optionally preserves licenses for compressed JavaScript files.
 
 == Components
 
-* Rake tasks for managing packages
+* Rake tasks for managing packages.
 * Helper functions for including these JavaScript and CSS files in your views.
 * YAML configuration file for mapping JavaScript and CSS files to packages.
 * Rake Task for auto-generating the YAML file from your existing JavaScript files.
@@ -46,20 +46,20 @@ http://www.crockford.com/javascript/jsmin.html
 == Updates
 
 November '08:
-* Rails 2.2 compatibility fixes
+* Rails 2.2 compatibility fixes.
 * No more mucking with internal Rails functions, which means:
   * Return to use of query-string timestamps. Greatly simplifies things.
-  * Multiple asset-hosts supported
+  * Multiple asset-hosts supported.
   * Filenames with "."'s in them, such as "jquery-x.x.x" are supported.
 * Now compatible with any revision control system since it no longer uses revision numbers.
 * Packages generated on demand in production mode. Running create_all rake task no longer necessary.
 
 == How to Use:
 
-1. Download and install the plugin:
-   ./script/plugin install git://github.com/sbecker/asset_packager.git
+1) Download and install the plugin:
+  ./script/plugin install git://github.com/sbecker/asset_packager.git
 
-2. Run the rake task "asset:packager:create_yml" to generate the /config/asset_packages.yml
+2) Run the rake task "asset:packager:create_yml" to generate the /config/asset_packages.yml
 file the first time. You will need to reorder files under 'base' so dependencies are loaded 
 in correct order. Feel free to rename or create new file packages.
 
@@ -72,49 +72,47 @@ longer makes sense and cause a syntax error.
 Example from a fresh rails app after running the rake task. (Stylesheets is blank because a 
 default rails app has no stylesheets yet.):
 
---- 
-javascripts: 
-- base: 
-  - prototype
-  - effects
-  - dragdrop
-  - controls
-  - application
-stylesheets: 
-- base: []
+  javascripts: 
+  - base: 
+    - prototype
+    - effects
+    - dragdrop
+    - controls
+    - application
+  stylesheets: 
+  - base: []
   
 Multiple packages with licenses:
 
----
-javascripts:
-- base:
-  - prototype: prototype
-  - effects: scriptaculous
-  - controls: scriptaculous
-  - dragdrop: scriptaculous
-  - application
-- secondary:
-  - foo
-  - bar
-stylesheets:
-- base:
-  - screen
-  - header
-- secondary:
-  - foo
-  - bar
-licenses:
-  prototype: |
-    * Prototype JavaScript framework, version 1.5.0_rc0
-    * (c) 2005 Sam Stephenson
-    * Prototype is freely distributable under the terms of an MIT-style license.
-    * For details, see the Prototype web site: http://www.prototypejs.org/
-  scriptaculous: |
-    * script.aculo.us scriptaculous.js v1.8.0, Tue Nov 06 15:01:40 +0300 2007
-    * script.aculo.us is freely distributable under the terms of an MIT-style license.
-    * For details, see the script.aculo.us web site: http://script.aculo.us/
+  javascripts:
+  - base:
+    - prototype: prototype
+    - effects: scriptaculous
+    - controls: scriptaculous
+    - dragdrop: scriptaculous
+    - application
+  - secondary:
+    - foo
+    - bar
+  stylesheets:
+  - base:
+    - screen
+    - header
+  - secondary:
+    - foo
+    - bar
+  licenses:
+    prototype: |
+      * Prototype JavaScript framework, version 1.5.0_rc0
+      * (c) 2005 Sam Stephenson
+      * Prototype is freely distributable under the terms of an MIT-style license.
+      * For details, see the Prototype web site: http://www.prototypejs.org/
+    scriptaculous: |
+      * script.aculo.us scriptaculous.js v1.8.0, Tue Nov 06 15:01:40 +0300 2007
+      * script.aculo.us is freely distributable under the terms of an MIT-style license.
+      * For details, see the script.aculo.us web site: http://script.aculo.us/
 
-3. Run the rake task "asset:packager:build_all" to generate the compressed, merged versions
+3) Run the rake task "asset:packager:build_all" to generate the compressed, merged versions
 for each package. Whenever you rearrange the yaml file, you'll need to run this task again. 
 
 Merging and compressing is expensive, so this is something we want to do once, not every time
@@ -124,9 +122,9 @@ to avoid an initially slow request the first time a page is generated.
 Note: The package will be generated on the fly if it doesn't yet exist, so you don't *need* 
 to run the rake task when deploying, its just recommended for speeding up initial requests.
 
-4. Use the helper functions whenever including these files in your application. See below for examples.
+4) Use the helper functions whenever including these files in your application. See below for examples.
 
-5. Potential warning: css compressor function currently removes CSS comments. This might blow
+5) Potential warning: css compressor function currently removes CSS comments. This might blow
 away some CSS hackery. To disable comment removal, comment out /lib/synthesis/asset_package.rb line 238.
 
 == JavaScript Examples
@@ -163,9 +161,9 @@ All options for stylesheet_link_tag still work, so if you want to specify a diff
 
 == Rake tasks
 
-rake asset:packager:build_all        # Merge and compress assets
-rake asset:packager:create_yml       # Generate asset_packages.yml from existing assets
-rake asset:packager:delete_all       # Delete all asset builds
+  rake asset:packager:build_all        # Merge and compress assets
+  rake asset:packager:create_yml       # Generate asset_packages.yml from existing assets
+  rake asset:packager:delete_all       # Delete all asset builds
 
 == Running the tests
 
@@ -173,10 +171,10 @@ This plugin has a full suite of tests. But since they
 depend on rails, it has to be run in the context of a
 rails app, in the vendor/plugins directory. Observe:
 
-> rails newtestapp
-> cd newtestapp
-> ./script/plugin install ./script/plugin install git://github.com/sbecker/asset_packager.git
-> rake test:plugins PLUGIN=asset_packager # all tests pass
+  > rails newtestapp
+  > cd newtestapp
+  > ./script/plugin install ./script/plugin install git://github.com/sbecker/asset_packager.git
+  > rake test:plugins PLUGIN=asset_packager # all tests pass
 
 == License
 Copyright (c) 2006-2008 Scott Becker - http://synthesis.sbecker.net

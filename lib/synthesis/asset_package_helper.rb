@@ -8,7 +8,7 @@ module Synthesis
     def javascript_include_merged(*sources)
       options = sources.last.is_a?(Hash) ? sources.pop.stringify_keys : { }
 
-      if sources.include?(:defaults) 
+      if sources.include?(:defaults)
         sources = sources[0..(sources.index(:defaults))] + 
           ['prototype', 'effects', 'dragdrop', 'controls'] + 
           (File.exists?("#{RAILS_ROOT}/public/javascripts/application.js") ? ['application'] : []) + 

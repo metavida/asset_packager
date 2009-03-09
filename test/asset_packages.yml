@@ -1,9 +1,9 @@
 javascripts:
 - base:
-  - prototype
-  - effects
-  - controls
-  - dragdrop
+  - prototype: prototype
+  - effects: scriptaculous
+  - controls: scriptaculous
+  - dragdrop: scriptaculous
 - secondary:
   - foo
   - bar
@@ -18,3 +18,13 @@ stylesheets:
 - subdir/styles:
   - foo
   - bar
+licenses:
+  prototype: |
+    * Prototype JavaScript framework, version 1.5.0_rc0
+    * (c) 2005 Sam Stephenson
+    * Prototype is freely distributable under the terms of an MIT-style license.
+    * For details, see the Prototype web site: http://www.prototypejs.org/
+  scriptaculous: |
+    * script.aculo.us scriptaculous.js v1.8.0, Tue Nov 06 15:01:40 +0300 2007
+    * script.aculo.us is freely distributable under the terms of an MIT-style license.
+    * For details, see the script.aculo.us web site: http://script.aculo.us/

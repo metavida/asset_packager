@@ -4,7 +4,20 @@ module Synthesis
     # class variables
     @@asset_packages_yml = $asset_packages_yml || 
       (File.exists?("#{RAILS_ROOT}/config/asset_packages.yml") ? YAML.load_file("#{RAILS_ROOT}/config/asset_packages.yml") : nil)
-  
+    
+    # the @@asset_packages_sources variable contains only a list of
+    # target and source values (without any license information)
+    @@asset_packages_sources = @@asset_packages_yml.inject({}) do |hash, yml|
+      if yml.first != 'licenses'
+        hash[yml.first] = yml.last.map do |h|
+          target = h.keys.first
+          source = h[target].map { |s| s.is_a?(Hash) ? s.keys.first : s }
+          {target=>source}
+        end
+      end
+      hash
+    end
+    
     # singleton methods
     class << self
       
@@ -21,17 +34,17 @@ module Synthesis
       end
 
       def find_by_type(asset_type)
-        @@asset_packages_yml[asset_type].map { |p| self.new(asset_type, p) }
+        @@asset_packages_sources[asset_type].map { |p| self.new(asset_type, p) }
       end
 
       def find_by_target(asset_type, target)
-        package_hash = @@asset_packages_yml[asset_type].find {|p| p.keys.first == target }
+        package_hash = @@asset_packages_sources[asset_type].find {|p| p.keys.first == target }
         package_hash ? self.new(asset_type, package_hash) : nil
       end
 
       def find_by_source(asset_type, source)
         path_parts = parse_path(source)
-        package_hash = @@asset_packages_yml[asset_type].find do |p|
+        package_hash = @@asset_packages_sources[asset_type].find do |p|
           key = p.keys.first
           p[key].include?(path_parts[2]) && (parse_path(key)[1] == path_parts[1])
         end
@@ -59,13 +72,13 @@ module Synthesis
       end
 
       def build_all
-        @@asset_packages_yml.keys.each do |asset_type|
+        @@asset_packages_sources.keys.each do |asset_type|
           @@asset_packages_yml[asset_type].each { |p| self.new(asset_type, p).build }
         end
       end
 
       def delete_all
-        @@asset_packages_yml.keys.each do |asset_type|
+        @@asset_packages_sources.keys.each do |asset_type|
           @@asset_packages_yml[asset_type].each { |p| self.new(asset_type, p).delete_previous_build }
         end
       end
@@ -148,33 +161,78 @@ module Synthesis
       end
     
       def compressed_file
+        merged_file = ""
+        previous_license = nil
+        
         case @asset_type
-          when "javascripts" then compress_js(merged_file)
-          when "stylesheets" then compress_css(merged_file)
+        when "javascripts"
+          @sources.each { |source|
+            name = source
+            license = nil
+            from_file =  ''
+            if source.is_a?(Hash)
+              name = source.keys.first
+              license = source.values.first
+            end
+            
+            File.open("#{@asset_path}/#{name}.#{@extension}", "r") { |f| 
+              from_file += f.read + "\n" 
+            }
+            
+            from_file = compress_js(from_file)
+            
+            license_text = ''
+            if previous_license != license
+              if previous_license
+                license_text += "\n/* END #{ previous_license.upcase } LICENSE */\n\n"
+              end
+              if license
+                license_text += "/* BEGIN #{ license.upcase } LICENSE\n#{ @@asset_packages_yml['licenses'][license] }*/\n"
+              end
+            end
+            previous_license = license
+            merged_file += license_text + from_file
+          }
+          if previous_license
+            merged_file += "\n/* END #{ previous_license.upcase } LICENSE */"
+          end
+          merged_file
+          
+        when "stylesheets"
+          @sources.each {|s| 
+            File.open("#{@asset_path}/#{s}.#{@extension}", "r") { |f| 
+              merged_file += f.read + "\n" 
+            }
+          }
+          
+          compress_css(merged_file)
         end
       end
 
       def compress_js(source)
-        jsmin_path = "#{RAILS_ROOT}/vendor/plugins/asset_packager/lib"
+        lib_path = "#{RAILS_ROOT}/vendor/plugins/asset_packager/lib"
         tmp_path = "#{RAILS_ROOT}/tmp/#{@target}_packaged"
-      
+        ran = false
+        
         # write out to a temp file
         File.open("#{tmp_path}_uncompressed.js", "w") {|f| f.write(source) }
-      
+        
         # compress file with JSMin library
-        `ruby #{jsmin_path}/jsmin.rb <#{tmp_path}_uncompressed.js >#{tmp_path}_compressed.js \n`
-
+        ran = system("ruby '#{lib_path}/jsmin.rb' <'#{tmp_path}_uncompressed.js' >'#{tmp_path}_compressed.js';")
+        
+        raise "There was an error compressing a JS file using jsmin." unless ran
+        
         # read it back in and trim it
         result = ""
         File.open("#{tmp_path}_compressed.js", "r") { |f| result += f.read.strip }
-  
+        
         # delete temp files if they exist
         File.delete("#{tmp_path}_uncompressed.js") if File.exists?("#{tmp_path}_uncompressed.js")
         File.delete("#{tmp_path}_compressed.js") if File.exists?("#{tmp_path}_compressed.js")
-
+        
         result
       end
-  
+
       def compress_css(source)
         source.gsub!(/\s+/, " ")           # collapse space
         source.gsub!(/\/\*(.*?)\*\/ /, "") # remove comments - caution, might want to remove this if using css hacks
@@ -184,7 +242,7 @@ module Synthesis
         source.gsub!(/; \}/, "}")          # trim inside brackets
         source
       end
-
+      
       def get_extension
         case @asset_type
           when "javascripts" then "js"

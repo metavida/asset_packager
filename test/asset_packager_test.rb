@@ -62,21 +62,47 @@ class AssetPackagerTest < Test::Unit::TestCase
   end
   
   def test_js_names_from_sources
-    package_names = Synthesis::AssetPackage.targets_from_sources("javascripts", ["prototype", "effects", "noexist1", "controls", "foo", "noexist2"])
-    assert_equal 4, package_names.length
-    assert package_names[0].match(/\Abase_packaged\z/)
-    assert_equal package_names[1], "noexist1"
-    assert package_names[2].match(/\Asecondary_packaged\z/)
-    assert_equal package_names[3], "noexist2"
+    files_and_packages = ["base", "noexist1", "prototype", "foo", "noexist2"]
+    expected_names = ["base_packaged", "noexist1", "secondary_packaged", "noexist2"]
+    actual_names = Synthesis::AssetPackage.targets_from_sources("javascripts", files_and_packages)
+    
+    assert_equal expected_names.size, actual_names.size
+    expected_names.each_with_index do |expected, index|
+      assert_equal expected, actual_names[index], "#{expected} should have been in position #{index}."
+    end
   end
   
   def test_css_names_from_sources
-    package_names = Synthesis::AssetPackage.targets_from_sources("stylesheets", ["header", "screen", "noexist1", "foo", "noexist2"])
-    assert_equal 4, package_names.length
-    assert package_names[0].match(/\Abase_packaged\z/)
-    assert_equal package_names[1], "noexist1"
-    assert package_names[2].match(/\Asecondary_packaged\z/)
-    assert_equal package_names[3], "noexist2"
+    files_and_packages = ["base", "noexist1", "screen", "foo", "noexist2"]
+    expected_names = ["base_packaged", "noexist1", "secondary_packaged", "noexist2"]
+    actual_names = Synthesis::AssetPackage.targets_from_sources("stylesheets", files_and_packages)
+    
+    assert_equal expected_names.size, actual_names.size
+    expected_names.each_with_index do |expected, index|
+      assert_equal expected, actual_names[index], "#{expected} should have been in position #{index}."
+    end
+  end
+  
+  def test_sources_from_js_names
+    files_and_packages = ["base", "noexist1", "prototype", "foo", "noexist2"]
+    expected_names = ["prototype", "effects", "controls", "dragdrop", "noexist1", "foo", "noexist2"]
+    actual_names = Synthesis::AssetPackage.sources_from_targets("javascripts", files_and_packages)
+    
+    assert_equal expected_names.size, actual_names.size
+    expected_names.each_with_index do |expected, index|
+      assert_equal expected, actual_names[index], "#{expected} should have been in position #{index}."
+    end
+  end
+  
+  def test_sources_from_css_names
+    files_and_packages = ["base", "noexist1", "screen", "foo", "noexist2"]
+    expected_names = ["screen", "header", "noexist1", "foo", "noexist2"]
+    actual_names = Synthesis::AssetPackage.sources_from_targets("stylesheets", files_and_packages)
+    
+    assert_equal expected_names.size, actual_names.size
+    expected_names.each_with_index do |expected, index|
+      assert_equal expected, actual_names[index], "#{expected} should have been in position #{index}."
+    end
   end
   
   def test_should_return_merge_environments_when_set
@@ -88,5 +114,62 @@ class AssetPackagerTest < Test::Unit::TestCase
     assert_equal ["production"], Synthesis::AssetPackage.merge_environments
   end
 
+  def test_licenses_are_generally_removed_when_compressed
+    original_js = File.join($asset_base_path, 'javascripts/application.js')
+    
+    package = Synthesis::AssetPackage.find_by_source("javascripts", "application")
+    packed_js   = File.join($asset_base_path, "javascripts/#{package.target}_packaged.js")
+    
+    assert File.exists?(original_js), "application.js should exists."
+    assert File.exists?(packed_js), "#{package.target}_packaged.js should have been created."
+    
+    # Make sure the license text is included in application.js but not after packaging
+    found_license = false
+    File.foreach(original_js) do |line|
+      if line.include?("This JavaScript is free.")
+        found_license = true
+        break
+      end
+    end
+    assert found_license, "Should have found the license."
+    
+    found_license = false
+    File.foreach(packed_js) do |line|
+      if line.include?("This JavaScript is free.")
+        found_license = true
+        break
+      end
+    end
+    assert !found_license, "Should not have found the license."
+  end
   
+  def test_licenses_in_config_are_included
+    original_js = File.join($asset_base_path, 'javascripts/prototype.js')
+    
+    package = Synthesis::AssetPackage.find_by_source("javascripts", "prototype")
+    packed_js   = File.join($asset_base_path, "javascripts/#{package.target}_packaged.js")
+    
+    assert File.exists?(original_js), "application.js should exists."
+    assert File.exists?(packed_js), "#{package.target}_packaged.js should have been created."
+    
+    # Make sure the license text is included in application.js but not after packaging
+    found_license = false
+    File.foreach(original_js) do |line|
+      if line.include?("Prototype is freely distributable")
+        found_license = true
+        break
+      end
+    end
+    assert found_license, "Should have found the license."
+    
+    found_license = false
+    File.foreach(packed_js) do |line|
+      if line.include?("Prototype is freely distributable")
+        found_license = true
+        break
+      end
+    end
+    assert found_license, "Should not have found the license."
+  end
+
 end
